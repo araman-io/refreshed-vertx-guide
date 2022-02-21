@@ -10,5 +10,6 @@ db/
 *.ipr
 *.iml
 .vertx
+*.swp
 guide.html
 guide.pdf
