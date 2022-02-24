@@ -1,5 +1,6 @@
 package io.vertx.guides.wiki.http;
 
+import com.github.rjeschke.txtmark.Processor;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -11,6 +12,8 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.Integer.valueOf;
 
 public class HttpVerticle extends AbstractVerticle {
 
@@ -44,19 +47,77 @@ public class HttpVerticle extends AbstractVerticle {
   }
 
   private void pageDeletionHandler(RoutingContext routingContext) {
+    Integer id = valueOf(routingContext.request().getParam("id"));
+    JsonObject requestPayload = new JsonObject().put("id", id);
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "delete-page");
+    LOGGER.info("going to delete page " + id);
 
+    vertx
+      .eventBus()
+      .request("wikidb.queue", requestPayload, options)
+      .onSuccess(message -> {
+        routingContext.redirect("/");
+      })
+      .onFailure(error -> {
+        routingContext.fail(error);
+      });
   }
 
   private void pageCreateHandler(RoutingContext routingContext) {
-
+    String pageName = routingContext.request().getParam("name");
+    String location;
+    if (pageName == null || pageName.isEmpty()) {
+      location = "/";
+    } else {
+      location = "/wiki/" + pageName;
+    }
+    LOGGER.info("retrieved name " + pageName + " and location " + location);
+    routingContext.response().setStatusCode(303).putHeader("Location", location).end();
   }
 
   private void pageUpdateHandler(RoutingContext routingContext) {
+    Integer id = valueOf(routingContext.request().getParam("id"));
+    String title = routingContext.request().getParam("title");
+    boolean newPage = "yes".equals(routingContext.request().getParam("newPage"));
+    String markdown = routingContext.request().getParam("markdown");
 
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "upsert-page");
+    JsonObject requestPayload = new JsonObject()
+      .put("id", id)
+      .put("title", title)
+      .put("newPage", newPage)
+      .put("markDown", markdown);
+
+    vertx.eventBus()
+      .request("wikidb.queue", requestPayload, options)
+      .onSuccess(message -> {
+        routingContext.response().setStatusCode(303);
+        routingContext.response().putHeader("Location", "/wiki/" + title);
+        routingContext.response().end();
+      })
+      .onFailure(error -> {
+        routingContext.fail(error);
+      });
   }
 
   private void pageRenderingHandler(RoutingContext routingContext) {
-
+    String pageName = routingContext.pathParam("page");
+    JsonObject requestPayload = new JsonObject().put("page", pageName);
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "fetch-page");
+    vertx.eventBus()
+      .request("wikidb.queue", requestPayload, options)
+      .compose(response -> {
+        JsonObject templateData = (JsonObject) response.body();
+        templateData.put("content", Processor.process(templateData.getString("rawContent")));
+        return templateEngine.render(templateData, "templates/page.ftl");
+      })
+      .onSuccess(data -> {
+        routingContext.response().putHeader("Content-Type", "text/html");
+        routingContext.response().end(data.toString());
+      })
+      .onFailure(error -> {
+        routingContext.fail(500, error);
+      });
   }
 
   private void indexHandler(RoutingContext routingContext) {
