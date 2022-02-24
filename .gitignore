@@ -5,7 +5,6 @@ hs_err_pid*
 target/
 **/src/main/generated/
 .idea/
-db/
 *.iws
 *.ipr
 *.iml
@@ -13,3 +12,4 @@ db/
 *.swp
 guide.html
 guide.pdf
+db/
