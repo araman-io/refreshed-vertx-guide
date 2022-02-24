@@ -1,4 +1,4 @@
-package io.vertx.guides.wiki.db;
+package io.vertx.guides.wiki.database;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
-public class DbVerticle extends AbstractVerticle {
+public class DatabaseVerticle extends AbstractVerticle {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DbVerticle.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseVerticle.class);
   private JDBCPool dbPool;
   private static final String SQL_CREATE_PAGES_TABLE = "create table if not exists Pages (Id integer identity primary key, Name varchar(255) unique, Content clob)";
   private static final String SQL_GET_PAGE = "select Id, Content from Pages where Name = ?";

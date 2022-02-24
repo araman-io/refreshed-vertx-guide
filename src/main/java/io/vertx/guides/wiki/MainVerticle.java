@@ -19,7 +19,7 @@ package io.vertx.guides.wiki;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.guides.wiki.db.DbVerticle;
+import io.vertx.guides.wiki.database.DatabaseVerticle;
 import io.vertx.guides.wiki.http.HttpVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> promise) throws Exception {
-    vertx.deployVerticle(DbVerticle.class.getName())
+    vertx.deployVerticle(DatabaseVerticle.class.getName())
       .compose(result -> {
         return vertx.deployVerticle(HttpVerticle.class.getName());
       })

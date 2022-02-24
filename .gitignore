@@ -12,3 +12,4 @@ target/
 *.swp
 guide.html
 guide.pdf
+db/
