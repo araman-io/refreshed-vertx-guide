@@ -2,7 +2,9 @@ package io.vertx.guides.wiki.http;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -58,6 +60,22 @@ public class HttpVerticle extends AbstractVerticle {
   }
 
   private void indexHandler(RoutingContext routingContext) {
-
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "all-pages");
+    vertx.eventBus()
+      .request("wikidb.queue", new JsonObject(), options)
+      .compose(message -> {
+        JsonObject response = (JsonObject) message.body();
+        JsonObject templateData = new JsonObject().put("title", "Home of our Wiki!!!");
+        templateData.put("pages", response.getJsonArray("pages"));
+        LOGGER.info("We found {} pages in the database", templateData.getJsonArray("pages").size());
+        return templateEngine.render(templateData, "templates/index.ftl");
+      })
+      .onSuccess(data -> {
+        routingContext.response().putHeader("Content-Type", "text/html");
+        routingContext.response().end(data.toString());
+      })
+      .onFailure(error -> {
+        routingContext.fail(500, error);
+      });
   }
 }
