@@ -5,8 +5,12 @@ TIP: The corresponding source code is in the `step-1` folder of the guide reposi
 We are going to start with a first iteration and the simplest code possible to have a wiki written with Vert.x.
 While the next iterations will introduce more elegance into the code base as well as proper testing, we will see that quick prototyping with Vert.x is both a simple and a realistic target.
 
+<<<<<<< HEAD
 At this stage the wiki will use server-side rendering of HTML pages and data persistence through a JDBC connection.
 To do so, we will use the following libraries.
+=======
+NOTE: You can read the latest published version of the guide at https://vertx.io/docs/guide-for-java-devs/. This guide has been refreshed to work with v4.2 Vertx release
+>>>>>>> 4.2
 
 1. http://vertx.io/docs/vertx-web/java/[Vert.x web] as while the Vert.x core library _does_ support the creation of HTTP servers, it does not provide elegant APIs to deal with routing, handling of request payloads, etc.
 2. http://vertx.io/docs/vertx-jdbc-client/java/[Vert.x JDBC client] to provide an asynchronous API over JDBC.

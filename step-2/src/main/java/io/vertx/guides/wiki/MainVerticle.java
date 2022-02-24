@@ -18,38 +18,33 @@
 package io.vertx.guides.wiki;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
+import io.vertx.guides.wiki.db.DbVerticle;
+import io.vertx.guides.wiki.http.HttpVerticle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
-// tag::main[]
 public class MainVerticle extends AbstractVerticle {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
 
   @Override
   public void start(Promise<Void> promise) throws Exception {
-
-    Promise<String> dbVerticleDeployment = Promise.promise();  // <1>
-    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment);  // <2>
-
-    dbVerticleDeployment.future().compose(id -> {  // <3>
-
-      Promise<String> httpVerticleDeployment = Promise.promise();
-      vertx.deployVerticle(
-        "io.vertx.guides.wiki.HttpServerVerticle",  // <4>
-        new DeploymentOptions().setInstances(2),    // <5>
-        httpVerticleDeployment);
-
-      return httpVerticleDeployment.future();  // <6>
-
-    }).setHandler(ar -> {   // <7>
-      if (ar.succeeded()) {
+    vertx.deployVerticle(DbVerticle.class.getName())
+      .compose(result -> {
+        return vertx.deployVerticle(HttpVerticle.class.getName());
+      })
+      .onSuccess(result -> {
+        LOGGER.info("db and http verticles have been initialized");
         promise.complete();
-      } else {
-        promise.fail(ar.cause());
-      }
-    });
+      })
+      .onFailure(error -> {
+        LOGGER.info("FAILED to initialize either the db or http verticle");
+        promise.fail(error);
+      });
   }
+
 }
-// end::main[]
